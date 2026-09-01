@@ -1,0 +1,310 @@
+:root {
+  color-scheme: light;
+  --paper: #f3eee4;
+  --ink: #1c1917;
+  --muted: #57534e;
+  --rule: #d6cfc4;
+  --seal: #9a3412;
+  --navy: #1e3a5f;
+  --ok: #3f6212;
+  --never: #7f1d1d;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  line-height: 1.45;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(circle at 0 0, #efe8d8 0, transparent 42%),
+    var(--paper);
+}
+
+h1,
+h2,
+.kicker {
+  font-family: "Newsreader", Georgia, serif;
+  font-weight: 500;
+}
+
+h1 {
+  font-size: 2.4rem;
+  letter-spacing: -0.03em;
+  margin: 0.1rem 0 0.4rem;
+}
+
+h2 {
+  font-size: 1.15rem;
+  margin: 0 0 0.6rem;
+}
+
+a {
+  color: var(--navy);
+}
+
+button {
+  font: inherit;
+  border: 1px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  padding: 0.4rem 0.7rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+button.primary {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+button.ghost {
+  border-style: dashed;
+}
+
+.desk {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 4rem;
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  align-items: flex-start;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 1rem;
+}
+
+.kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  color: var(--seal);
+  margin: 0;
+}
+
+.lede {
+  max-width: 38rem;
+  margin: 0;
+  color: var(--muted);
+}
+
+.disclaimer {
+  margin: 0;
+  max-width: 14rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.webmcp-status {
+  font-size: 0.82rem;
+  color: var(--navy);
+  margin: 0 0 1rem;
+}
+
+.permissions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 1rem 0;
+}
+
+.perm {
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  border: 1px solid var(--rule);
+  padding: 0.2rem 0.45rem;
+  color: var(--muted);
+  font-family: "IBM Plex Sans", sans-serif;
+}
+
+.perm.on {
+  border-color: var(--navy);
+  color: var(--navy);
+}
+
+.perm.never {
+  border-color: var(--never);
+  color: var(--never);
+}
+
+.stages {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--ink);
+}
+
+.stage {
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  padding: 0.6rem 0.9rem;
+}
+
+.stage.active {
+  border-bottom-color: var(--seal);
+  color: var(--seal);
+}
+
+.seat {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.paper,
+.card {
+  background: #faf7f1;
+  border: 1px solid var(--rule);
+  padding: 1rem 1.1rem 1.2rem;
+}
+
+.meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.meta dt {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.meta dd {
+  margin: 0.15rem 0 0;
+}
+
+.lease {
+  white-space: pre-wrap;
+  font-family: "Newsreader", Georgia, serif;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.app-form {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.app-form label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.app-form input {
+  font: inherit;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--rule);
+  background: #fff;
+}
+
+.side {
+  display: grid;
+  gap: 1rem;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin: 0 0 0.7rem;
+}
+
+.findings {
+  list-style: none;
+  padding: 0;
+  margin: 0.8rem 0 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.finding header {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.finding.hi {
+  outline: 1px solid var(--seal);
+  padding: 0.4rem;
+}
+
+.author {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--navy);
+}
+
+.cost {
+  font-size: 0.88rem;
+  color: var(--seal);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.row em {
+  font-style: normal;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.card button + button {
+  margin-left: 0.35rem;
+}
+
+.card > button {
+  margin-bottom: 0.35rem;
+}
+
+.ok {
+  color: var(--ok);
+  font-size: 0.88rem;
+}
+
+.loud {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 840px) {
+  .grid,
+  .meta,
+  .top {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+}
