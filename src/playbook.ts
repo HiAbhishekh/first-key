@@ -52,7 +52,7 @@ export function lookupPlaybook(): {
   silent: string[];
 } {
   return {
-    audience: "First-apartment renter in California (planted packet: Maya Chen).",
+    audience: "First-apartment renter in California (sample packet: Maya Chen).",
     loud: PLAYBOOK_RULES.map((r) => r.title),
     silent: [
       "Quiet enjoyment",

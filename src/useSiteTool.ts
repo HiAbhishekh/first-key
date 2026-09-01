@@ -14,8 +14,8 @@ export type SiteToolConfig = {
 
 /**
  * Registers a tool with the page's model context and unregisters on unmount.
- * Pattern: Chrome use-webmcp-tool (document.modelContext.registerTool + AbortSignal).
- * ChatGPT Site tools only see top-level JS registration — not HTML forms, not iframes.
+ * Uses document.modelContext.registerTool with an AbortSignal.
+ * Register on the top-level document, not inside an iframe or HTML form attributes.
  */
 export function useSiteTool(config: SiteToolConfig): {
   supported: boolean;

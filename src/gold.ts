@@ -1,4 +1,4 @@
-/** Planted first-apartment packet. Judges never need to upload. */
+/** Sample first-apartment packet for the shared desk. */
 
 export const TENANT = "Maya Chen";
 export const PARENT = "Priya Chen";
@@ -14,7 +14,7 @@ export const LISTING = {
   rent: `$${RENT.toLocaleString("en-US")} / month`,
   term: `1 September 2026 – ${TERM_END}`,
   deposit: `$${RENT.toLocaleString("en-US")} security deposit`,
-  note: "Listed as first-time-renter friendly. The lease is the gold document on the next stage.",
+  note: "Listed as first-time-renter friendly. The lease is on the next stage.",
 };
 
 export const LEASE_TEXT = `RESIDENTIAL LEASE AGREEMENT

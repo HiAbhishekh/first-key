@@ -23,5 +23,5 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src"],
-  "exclude": ["src/proofs-run.ts"]
+  "exclude": ["src/check.ts"]
 }

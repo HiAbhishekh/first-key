@@ -1,11 +1,9 @@
 import { useMemo } from "react";
 import { bothAgreed, toolsOnStage, WITHHELD_TOOLS } from "./catalog";
-import { scorePlantedLease } from "./eval/score";
 import { PacketTools } from "./SiteTools";
 import { LISTING, LEASE_TEXT, PARENT, TENANT } from "./gold";
 import { downloadText } from "./letter";
 import { PLAYBOOK_RULES } from "./playbook";
-import { runProofs } from "./proofs";
 import { usePacket } from "./store";
 import type { Application, Stage } from "./types";
 
@@ -30,59 +28,7 @@ const APP_FIELDS: {
   { key: "hasPet", label: "Pet in the home (yes/no)", type: "text" },
 ];
 
-function EvalView() {
-  const score = scorePlantedLease();
-  return (
-    <div className="desk">
-      <h1>First Key eval</h1>
-      <p className="lede">
-        Deterministic playbook on the planted Maya Chen lease. Silence is
-        clauses the clerk does not pin.
-      </p>
-      <pre className="lease">{JSON.stringify(score, null, 2)}</pre>
-      <p>
-        <a href="/">Back to desk</a>
-        {" · "}
-        <a href="?view=proofs">Five proofs</a>
-      </p>
-    </div>
-  );
-}
-
-function ProofsView() {
-  const results = runProofs();
-  const all = results.every((r) => r.pass);
-  return (
-    <div className="desk">
-      <h1>Five proofs</h1>
-      <p className="lede">
-        Same reducers the WebMCP execute handlers call.{" "}
-        {all ? "All five pass." : "A proof failed — do not submit."}
-      </p>
-      <ul className="findings">
-        {results.map((r) => (
-          <li key={r.id} className="finding">
-            <header>
-              <span className="author">{r.pass ? "pass" : "fail"}</span>
-              <strong>
-                {r.id}. {r.claim}
-              </strong>
-            </header>
-            <p>{r.detail}</p>
-          </li>
-        ))}
-      </ul>
-      <p>
-        <a href="/">Back to desk</a>
-      </p>
-    </div>
-  );
-}
-
 export default function App() {
-  const view = new URLSearchParams(window.location.search).get("view");
-  if (view === "eval") return <EvalView />;
-  if (view === "proofs") return <ProofsView />;
   return <Desk />;
 }
 
@@ -143,13 +89,7 @@ function Desk() {
             draft. The clerk cannot send.
           </p>
         </div>
-        <p className="disclaimer">
-          Checklist for a planted lease — not legal advice.
-          {" · "}
-          <a href="?view=eval">Eval</a>
-          {" · "}
-          <a href="?view=proofs">Five proofs</a>
-        </p>
+        <p className="disclaimer">Not legal advice.</p>
       </header>
 
       <p className="muted">
@@ -223,7 +163,7 @@ function Desk() {
 
           {packet.stage === "lease" && (
             <>
-              <h2>Planted lease</h2>
+              <h2>Lease</h2>
               <pre className="lease">{leaseHtml}</pre>
             </>
           )}
@@ -255,12 +195,11 @@ function Desk() {
                   </label>
                 ))}
                 <button type="submit" className="primary">
-                  Submit application (human)
+                  Submit application
                 </button>
                 {packet.application.humanSubmitted && (
                   <p className="ok">
-                    Marked submitted on this page. Nothing left the browser.
-                    There is no submit_application tool.
+                    Saved on this page. It was not emailed.
                   </p>
                 )}
               </form>
@@ -346,8 +285,8 @@ function Desk() {
           <div className="card">
             <h2>Tray</h2>
             <p className="muted">
-              Letter and .ics stage here. Download is Countersign — a human
-              button, not a tool.
+              The letter and calendar hold wait here. Countersign downloads
+              them.
             </p>
             <button
               type="button"
@@ -384,8 +323,7 @@ function Desk() {
             )}
             {packet.outbound && !bothAgreed(packet) && !sameTabAsOtherSeat && (
               <p className="muted">
-                Open the other seat in a second tab. Both must agree. The
-                clerk has no agree tool.
+                Open the other seat in a new tab. Both people need to agree.
               </p>
             )}
             {packet.countersigned && (
@@ -396,15 +334,15 @@ function Desk() {
               className="ghost"
               onClick={() => dispatch({ type: "reset" })}
             >
-              Reset planted packet
+              Reset packet
             </button>
           </div>
 
           <div className="card">
-            <h2>Playbook (loud vs silent)</h2>
+            <h2>Playbook</h2>
             <p className="muted">
-              {PLAYBOOK_RULES.length} costly rules. Habitability and quiet
-              enjoyment stay quiet.
+              {PLAYBOOK_RULES.length} costly clauses. Ordinary terms stay off
+              this list.
             </p>
             <ul className="loud">
               {PLAYBOOK_RULES.map((r) => (

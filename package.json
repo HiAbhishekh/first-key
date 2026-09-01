@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "tsx src/proofs-run.ts"
+    "test": "tsx src/check.ts"
   },
   "dependencies": {
     "react": "^19.2.8",

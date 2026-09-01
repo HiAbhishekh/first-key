@@ -3,9 +3,9 @@ import { emptyPacket, reduce, type Action } from "./store";
 import { bothAgreed, toolsOnStage, WITHHELD_TOOLS } from "./catalog";
 import type { Packet } from "./types";
 
-export type ProofResult = {
+export type CheckResult = {
   id: string;
-  claim: string;
+  name: string;
   pass: boolean;
   detail: string;
 };
@@ -22,8 +22,8 @@ function autoRenew(packet: Packet) {
   return packet.findings.find((f) => f.ruleId === "auto-renew");
 }
 
-/** Same actions the WebMCP execute handlers dispatch. */
-export function runProofs(): ProofResult[] {
+/** Packet reducers used by the page-tool handlers. */
+export function runChecks(): CheckResult[] {
   const scanned = scanLease();
 
   const afterPull = play([{ type: "pull-listing" }]);
@@ -31,9 +31,9 @@ export function runProofs(): ProofResult[] {
   const petFinding = pet(afterScan);
   const auto = autoRenew(afterScan);
 
-  const proof1: ProofResult = {
-    id: "1",
-    claim: "The agent can operate the page.",
+  const pins: CheckResult = {
+    id: "pins",
+    name: "Playbook pins costly clauses as Clerk",
     pass:
       afterPull.stage === "lease" &&
       afterScan.findings.length === PLAYBOOK_RULES.length &&
@@ -41,36 +41,36 @@ export function runProofs(): ProofResult[] {
       scanned.length === PLAYBOOK_RULES.length,
     detail:
       afterScan.findings.length === PLAYBOOK_RULES.length
-        ? `pull_listing_terms + run_playbook produced ${afterScan.findings.length} Clerk pins on the live packet.`
-        : `Expected ${PLAYBOOK_RULES.length} clerk pins, got ${afterScan.findings.length}.`,
+        ? `run_playbook pinned ${afterScan.findings.length} clauses.`
+        : `Expected ${PLAYBOOK_RULES.length} pins, got ${afterScan.findings.length}.`,
   };
 
   if (!petFinding || !auto) {
     return [
-      proof1,
+      pins,
       {
-        id: "2",
-        claim: "The human can correct the agent and the correction persists.",
+        id: "dismiss",
+        name: "Dismissed findings stay dismissed",
         pass: false,
         detail: "Playbook did not pin pet-fee and auto-renew.",
       },
       {
-        id: "3",
-        claim: "The available agent tools change with application state.",
+        id: "tools",
+        name: "Tools follow the stage",
         pass: false,
-        detail: "Blocked on proof 1.",
+        detail: "Blocked on pins.",
       },
       {
-        id: "4",
-        claim: "The irreversible capability is structurally unavailable to the agent.",
+        id: "no-send",
+        name: "Send and countersign are not page tools",
         pass: false,
-        detail: "Blocked on proof 1.",
+        detail: "Blocked on pins.",
       },
       {
-        id: "5",
-        claim: "Two humans can agree on the action before the human-only operation occurs.",
+        id: "two-seats",
+        name: "Countersign needs two seats",
         pass: false,
-        detail: "Blocked on proof 1.",
+        detail: "Blocked on pins.",
       },
     ];
   }
@@ -83,16 +83,16 @@ export function runProofs(): ProofResult[] {
   const rerun = reduce(dismissed, { type: "run-playbook" });
   const petAfter = pet(rerun);
 
-  const proof2: ProofResult = {
-    id: "2",
-    claim: "The human can correct the agent and the correction persists.",
+  const dismiss: CheckResult = {
+    id: "dismiss",
+    name: "Dismissed findings stay dismissed",
     pass:
       petAfter?.status === "dismissed" &&
       rerun.findings.filter((f) => f.ruleId === "pet-fee").length === 1,
     detail:
       petAfter?.status === "dismissed" &&
       rerun.findings.filter((f) => f.ruleId === "pet-fee").length === 1
-        ? "Dismissed pet-fee stayed dismissed after a second run_playbook. No second pin."
+        ? "Pet fee stayed dismissed after a second run_playbook."
         : `After re-run, pet status=${petAfter?.status}, count=${rerun.findings.filter((f) => f.ruleId === "pet-fee").length}.`,
   };
 
@@ -107,9 +107,9 @@ export function runProofs(): ProofResult[] {
   const appPacket = reduce(accepted, { type: "set-stage", stage: "application" });
   const appTools = toolsOnStage(appPacket);
 
-  const proof3: ProofResult = {
-    id: "3",
-    claim: "The available agent tools change with application state.",
+  const tools: CheckResult = {
+    id: "tools",
+    name: "Tools follow the stage",
     pass:
       listingTools.includes("pull_listing_terms") &&
       !listingTools.includes("run_playbook") &&
@@ -120,11 +120,11 @@ export function runProofs(): ProofResult[] {
       appTools.includes("fill_application_field") &&
       !appTools.includes("run_playbook") &&
       !appTools.includes("submit_application" as never),
-    detail: `listing=${listingTools.join(", ")} | lease=${leaseTools.join(", ")} | lease+accepted adds stage_outbound | application=${appTools.join(", ")}`,
+    detail: `listing=${listingTools.join(", ")} | lease=${leaseTools.join(", ")} | application=${appTools.join(", ")}`,
   };
 
   const staged = reduce(accepted, { type: "stage-outbound" });
-  const agentTriesCountersign = reduce(staged, { type: "countersign" });
+  const earlyCountersign = reduce(staged, { type: "countersign" });
   const withheldNeverOn = WITHHELD_TOOLS.every(
     (name) => !toolsOnStage(staged).includes(name as never),
   );
@@ -137,18 +137,18 @@ export function runProofs(): ProofResult[] {
     );
   });
 
-  const proof4: ProofResult = {
-    id: "4",
-    claim: "The irreversible capability is structurally unavailable to the agent.",
+  const noSend: CheckResult = {
+    id: "no-send",
+    name: "Send and countersign are not page tools",
     pass:
       withheldNeverOn &&
       withheldOnEveryStage &&
       !toolsOnStage(staged).includes("send" as never) &&
-      agentTriesCountersign.countersigned === false &&
+      earlyCountersign.countersigned === false &&
       staged.outbound !== null,
-    detail: agentTriesCountersign.countersigned
-      ? "FAIL: countersign succeeded without both humans agreeing."
-      : "send/submit/agree/countersign are not in toolsOnStage on any stage. Reducer refuses countersign until two distinct tabs agree. No landlord network call exists.",
+    detail: earlyCountersign.countersigned
+      ? "Countersign ran before both seats agreed."
+      : "send, agree, and countersign stay off the stage list. Countersign waits for both seats.",
   };
 
   const onlyMaya = reduce(staged, {
@@ -170,9 +170,9 @@ export function runProofs(): ProofResult[] {
   });
   const released = reduce(both, { type: "countersign" });
 
-  const proof5: ProofResult = {
-    id: "5",
-    claim: "Two humans can agree on the action before the human-only operation occurs.",
+  const twoSeats: CheckResult = {
+    id: "two-seats",
+    name: "Countersign needs two seats",
     pass:
       !bothAgreed(staged) &&
       !bothAgreed(onlyMaya) &&
@@ -187,9 +187,9 @@ export function runProofs(): ProofResult[] {
       released.countersigned &&
       !stillLocked.countersigned &&
       !sameTabStillLocked.countersigned
-        ? "Maya-only agree cannot Countersign. Same browsing context cannot agree as both people. Maya tab + parent tab unlocks Countersign."
+        ? "One seat cannot countersign. Two tabs can."
         : `mayaOnly=${stillLocked.countersigned} sameTab=${sameTabStillLocked.countersigned} both=${bothAgreed(both)} released=${released.countersigned}`,
   };
 
-  return [proof1, proof2, proof3, proof4, proof5];
+  return [pins, dismiss, tools, noSend, twoSeats];
 }

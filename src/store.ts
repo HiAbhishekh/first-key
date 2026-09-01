@@ -242,7 +242,7 @@ export function usePacket(): {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) return hydratePacket(JSON.parse(raw) as Packet);
     } catch {
-      /* planted default */
+      /* empty packet */
     }
     return emptyPacket();
   });

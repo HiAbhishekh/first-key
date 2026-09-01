@@ -1,6 +1,6 @@
 import type { Packet, Stage } from "./types";
 
-/** Never passed to document.modelContext.registerTool. */
+/** Tools that are never registered. */
 export const WITHHELD_TOOLS = [
   "send",
   "send_email",
@@ -40,7 +40,7 @@ export function bothAgreed(packet: Packet): boolean {
   );
 }
 
-/** Single source of truth for Proof 3. Site tools and the roster both use this. */
+/** Tools available on the current stage. The roster and page tools share this list. */
 export function toolsOnStage(packet: Packet): ToolName[] {
   const stage: Stage = packet.stage;
   const on: ToolName[] = ["get_packet_state", "lookup_playbook"];
