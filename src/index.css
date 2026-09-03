@@ -149,9 +149,9 @@ button.sm {
 
 /* ─── Layout ─────────────────────────────────────────────────── */
 .page {
-  max-width: 1200px;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 0 1.25rem 5rem;
+  padding: 1rem 1.25rem 4rem;
 }
 
 /* ─── Navbar ─────────────────────────────────────────────────── */
@@ -165,9 +165,9 @@ button.sm {
   padding: 0 1.25rem;
 }
 .navbar-inner {
-  max-width: 1200px;
+  max-width: 1180px;
   margin: 0 auto;
-  height: 52px;
+  min-height: 48px;
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -183,14 +183,76 @@ button.sm {
   font-size: 0.8rem;
   color: var(--muted);
   flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .navbar-actions {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* PacketTools registers WebMCP tools; its fallback status is hidden because the
+   navbar already shows a designed status pill. */
+.webmcp-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 /* ─── Hero / intro ───────────────────────────────────────────── */
+.hero-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 1.1rem;
+  margin-bottom: 0.85rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 1.1rem;
+  align-items: stretch;
+}
+.hero-copy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1.25rem;
+  align-items: center;
+}
+.hero-proof {
+  min-width: 170px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  padding: 0.75rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 0.75rem;
+  align-content: center;
+}
+.hero-proof a {
+  grid-column: 1 / -1;
+  font-size: 0.8rem;
+}
+.proof-label {
+  display: block;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.hero-proof strong {
+  display: block;
+  margin-top: 0.08rem;
+  color: var(--green);
+  font-size: 1rem;
+}
 .intro {
   padding: 2rem 0 1.5rem;
   border-bottom: 1px solid var(--border);
@@ -204,21 +266,21 @@ button.sm {
 }
 .intro-title {
   font-family: "Newsreader", Georgia, serif;
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: 600;
   letter-spacing: -0.03em;
   color: var(--ink);
 }
 .intro-sub {
-  margin-top: 0.4rem;
+  margin-top: 0.3rem;
   color: var(--ink2);
-  font-size: 0.95rem;
-  max-width: 50ch;
+  font-size: 0.9rem;
+  max-width: 64ch;
 }
 .intro-disclaimer {
   font-size: 0.78rem;
   color: var(--muted);
-  margin-top: 0.25rem;
+  margin-top: 0.2rem;
 }
 
 /* ─── WebMCP status badge ────────────────────────────────────── */
@@ -263,6 +325,31 @@ button.sm {
   align-items: center;
   gap: 0.5rem 1.5rem;
 }
+.quick-test {
+  border: 1px solid var(--blue-bdr);
+  background: var(--blue-bg);
+  border-radius: var(--radius);
+  padding: 0.75rem 0.9rem;
+}
+.quick-title {
+  color: var(--blue);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+}
+.quick-test ol {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.22rem;
+}
+.quick-test li {
+  color: var(--ink2);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
 .how-step {
   display: flex;
   align-items: center;
@@ -294,7 +381,7 @@ button.sm {
   border-radius: var(--radius-lg);
   background: var(--bg);
   padding: 4px;
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.85rem;
   overflow-x: auto;
 }
 .stage-btn {
@@ -306,7 +393,7 @@ button.sm {
   color: var(--muted);
   font-size: 0.875rem;
   font-weight: 500;
-  padding: 0.5rem 0.75rem;
+  padding: 0.45rem 0.75rem;
   cursor: pointer;
   transition: background .15s, color .15s;
   white-space: nowrap;
@@ -335,8 +422,8 @@ button.sm {
 /* ─── Main grid ──────────────────────────────────────────────── */
 .desk-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: 1.25rem;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  gap: 1rem;
   align-items: start;
 }
 
@@ -372,18 +459,21 @@ button.sm {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 0.6rem 1rem;
-  font-size: 0.85rem;
+  padding: 0.48rem 0.8rem;
+  font-size: 0.82rem;
   color: var(--ink2);
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.4rem 1rem;
-  margin-bottom: 1rem;
+  gap: 0.35rem 0.75rem;
+  margin-bottom: 0.75rem;
 }
 .seat-you {
   font-weight: 600;
   color: var(--blue);
+}
+.sep {
+  color: var(--border-dk);
 }
 
 /* ─── Listing content ────────────────────────────────────────── */
@@ -391,21 +481,22 @@ button.sm {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 1.5rem;
+  padding: 1.15rem;
+  box-shadow: var(--shadow);
 }
 .listing-card h2 {
-  font-size: 1.25rem;
-  margin-bottom: 1rem;
+  font-size: 1.12rem;
+  margin-bottom: 0.85rem;
 }
 .listing-meta {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
+  gap: 0.75rem;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 1rem;
-  margin-bottom: 1rem;
+  padding: 0.8rem;
+  margin-bottom: 0.85rem;
 }
 .listing-meta dt {
   font-size: 0.7rem;
@@ -431,6 +522,7 @@ button.sm {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   overflow: hidden;
+  box-shadow: var(--shadow);
 }
 .lease-card-header {
   padding: 0.85rem 1.25rem;
@@ -441,7 +533,7 @@ button.sm {
 }
 .lease-card-header h2 { font-size: 0.95rem; }
 .lease-text {
-  padding: 1.25rem;
+  padding: 1rem 1.15rem;
   font-family: "Newsreader", Georgia, serif;
   font-size: 0.9rem;
   line-height: 1.7;
@@ -457,6 +549,7 @@ button.sm {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   overflow: hidden;
+  box-shadow: var(--shadow);
 }
 .outbound-letter {
   padding: 1.25rem;
@@ -483,7 +576,8 @@ button.sm {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 1.5rem;
+  padding: 1.15rem;
+  box-shadow: var(--shadow);
 }
 .app-form {
   display: grid;
@@ -602,7 +696,8 @@ button.sm {
 /* ─── Side panel ─────────────────────────────────────────────── */
 .side-col {
   display: grid;
-  gap: 1rem;
+  gap: 0.75rem;
+  align-self: start;
 }
 
 /* ─── Tools panel ────────────────────────────────────────────── */
@@ -618,7 +713,7 @@ button.sm {
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--muted);
-  padding: 0.5rem 0.85rem 0.25rem;
+  padding: 0.45rem 0.85rem 0.25rem;
 }
 .tool-chips {
   display: flex;
@@ -627,7 +722,7 @@ button.sm {
   padding: 0 0.85rem 0.75rem;
 }
 .chip {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-family: "SF Mono", "Fira Code", monospace;
   padding: 0.22rem 0.55rem;
   border-radius: 4px;
@@ -665,18 +760,18 @@ button.sm {
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
-  padding: 0.75rem 1rem;
+  padding: 0.62rem 0.9rem;
   border-bottom: 1px solid var(--border);
 }
 .tray-step:last-child { border-bottom: none; }
 
 .tray-step-num {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   border: 2px solid var(--border-dk);
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: 0.64rem;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -720,8 +815,8 @@ button.sm {
   padding: 0;
 }
 .playbook-item {
-  padding: 0.55rem 1rem;
-  font-size: 0.85rem;
+  padding: 0.48rem 0.9rem;
+  font-size: 0.8rem;
   color: var(--ink2);
   border-bottom: 1px solid var(--border);
   display: flex;
@@ -885,6 +980,10 @@ button.sm {
 /* ─── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 900px) {
   .desk-grid {
+    grid-template-columns: 1fr;
+  }
+  .hero-card,
+  .hero-copy {
     grid-template-columns: 1fr;
   }
   .listing-meta {

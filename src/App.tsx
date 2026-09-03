@@ -11,10 +11,10 @@ import { usePacket } from "./store";
 import type { Application, Stage } from "./types";
 
 const STAGES: { id: Stage; label: string; hint: string }[] = [
-  { id: "listing", label: "① Listing", hint: "Pull terms" },
-  { id: "lease",   label: "② Lease",   hint: "Clerk scans" },
-  { id: "application", label: "③ Application", hint: "Fill form" },
-  { id: "outbound", label: "④ Outbound", hint: "Both agree" },
+  { id: "listing", label: "1. Listing", hint: "Pull terms" },
+  { id: "lease", label: "2. Lease", hint: "Clerk scans" },
+  { id: "application", label: "3. Application", hint: "Fill form" },
+  { id: "outbound", label: "4. Outbound", hint: "Both agree" },
 ];
 
 const APP_FIELDS: {
@@ -47,7 +47,7 @@ function WebMCPStatus({ supported }: { supported: boolean }) {
   return (
     <span className={`webmcp-pill ${supported ? "on" : "off"}`}>
       <span className="webmcp-dot" />
-      {supported ? "WebMCP active — AI sees live tools" : "No WebMCP — desk works without AI"}
+      {supported ? "WebMCP active - AI sees live tools" : "No WebMCP - desk works without AI"}
     </span>
   );
 }
@@ -104,11 +104,10 @@ function Desk() {
 
   return (
     <>
-      {/* ── Sticky navbar ── */}
       <nav className="navbar">
         <div className="navbar-inner">
-          <span className="navbar-logo">🔑 First Key</span>
-          <span className="navbar-tagline">First-apartment AI desk · Maya Chen &amp; Priya Chen</span>
+          <span className="navbar-logo">First Key</span>
+          <span className="navbar-tagline">First-apartment AI desk for Maya Chen and Priya Chen</span>
           <div className="navbar-actions">
             <WebMCPStatus supported={webmcpOn} />
             <button
@@ -132,9 +131,8 @@ function Desk() {
       <PacketTools packet={packet} dispatch={dispatch} onJump={setHighlightId} />
 
       <main className="page">
-        {/* ── Hero intro ── */}
-        <div className="intro">
-          <div className="intro-row">
+        <section className="hero-card">
+          <div className="hero-copy">
             <div>
               <div className="intro-title">Maya's first apartment</div>
               <p className="intro-sub">
@@ -144,33 +142,42 @@ function Desk() {
               </p>
               <p className="intro-disclaimer">Not legal advice.</p>
             </div>
+            <div className="hero-proof">
+              <div>
+                <span className="proof-label">Recall</span>
+                <strong>{playbookScore.costlyRecallN}</strong>
+              </div>
+              <div>
+                <span className="proof-label">Silence</span>
+                <strong>{playbookScore.silenceN}</strong>
+              </div>
+              <a href="/?view=playbook" onClick={(e) => go("/?view=playbook", e)}>
+                Full evaluation
+              </a>
+            </div>
           </div>
-        </div>
 
-        {/* ── How it works strip ── */}
-        <div className="how-strip">
-          <strong style={{ fontSize: "0.8rem" }}>How to test:</strong>
-          <span className="how-step"><span className="how-num">1</span> Pull listing terms on the Listing tab</span>
-          <span className="how-arrow">→</span>
-          <span className="how-step"><span className="how-num">2</span> Ask AI to "run the playbook" on the Lease tab</span>
-          <span className="how-arrow">→</span>
-          <span className="how-step"><span className="how-num">3</span> Accept findings, Stage outbound</span>
-          <span className="how-arrow">→</span>
-          <span className="how-step"><span className="how-num">4</span> Open a 2nd tab as the other person, both agree → Countersign</span>
-        </div>
+          <div className="quick-test">
+            <div className="quick-title">Judge test path</div>
+            <ol>
+              <li>Pull listing terms.</li>
+              <li>On Lease, ask the AI to run the playbook.</li>
+              <li>Accept findings and stage outbound.</li>
+              <li>Open the other seat in a second tab. Both agree, then countersign.</li>
+            </ol>
+          </div>
+        </section>
 
-        {/* ── Seat indicator ── */}
         <div className="seat-banner">
           <span>You are: <span className="seat-you">{myName}</span></span>
-          <span style={{ color: "var(--border-dk)" }}>·</span>
+          <span className="sep">/</span>
           <a href={otherSeat} target="_blank" rel="noreferrer">
-            Open {otherName}'s seat in a new tab →
+            Open {otherName}'s seat in a new tab
           </a>
-          <span style={{ color: "var(--border-dk)" }}>·</span>
-          <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>Both tabs share the same live packet</span>
+          <span className="sep">/</span>
+          <span>Both tabs share the same live packet</span>
         </div>
 
-        {/* ── Stage tabs ── */}
         <div className="stage-bar">
           {STAGES.map((s) => (
             <button
@@ -185,10 +192,8 @@ function Desk() {
           ))}
         </div>
 
-        {/* ── Main grid ── */}
         <div className="desk-grid">
 
-          {/* ── Left: stage content ── */}
           <div>
             {packet.stage === "listing" && (
               <div className="listing-card">
@@ -208,7 +213,7 @@ function Desk() {
                 </button>
                 {packet.listingPulled && (
                   <p className="msg-ok" style={{ marginTop: "0.75rem" }}>
-                    ✓ Listing terms saved to packet. Move to the Lease tab.
+                    Listing terms saved to packet. Move to the Lease tab.
                   </p>
                 )}
               </div>
@@ -253,7 +258,7 @@ function Desk() {
                   <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                     <button type="submit" className="primary">Submit application</button>
                     {packet.application.humanSubmitted && (
-                      <span className="msg-ok">✓ Saved — not emailed</span>
+                      <span className="msg-ok">Saved - not emailed</span>
                     )}
                   </div>
                 </form>
@@ -269,10 +274,9 @@ function Desk() {
                   <pre className="outbound-letter">{packet.outbound.letter}</pre>
                 ) : (
                   <div className="outbound-empty">
-                    <div className="outbound-empty-icon">📬</div>
                     <p style={{ fontWeight: 600, marginBottom: "0.25rem" }}>Nothing staged yet</p>
                     <p style={{ fontSize: "0.85rem", color: "var(--muted)" }}>
-                      Go to the Lease tab → accept findings → Stage outbound.
+                      Go to the Lease tab, accept findings, then stage outbound.
                       The clerk drafts the letter; it waits here for two humans to agree.
                     </p>
                   </div>
@@ -281,13 +285,11 @@ function Desk() {
             )}
           </div>
 
-          {/* ── Right: side panel ── */}
           <div className="side-col">
 
-            {/* ── Tool capability panel ── */}
             <div className="tools-panel">
               <div className="card-header">
-                <h2>🤖 Clerk tools — stage: {packet.stage}</h2>
+                <h2>Clerk tools - stage: {packet.stage}</h2>
               </div>
               <div className="tools-section-label">Active now</div>
               <div className="tool-chips">
@@ -304,12 +306,11 @@ function Desk() {
               </div>
             </div>
 
-            {/* ── Findings panel ── */}
             <div className="card">
               <div className="card-header">
-                <h2>📌 Findings</h2>
+                <h2>Findings</h2>
                 <span style={{ fontSize: "0.78rem", color: "var(--muted)", marginLeft: "auto" }}>
-                  {openN} open · {acceptedN} accepted
+                  {openN} open / {acceptedN} accepted
                 </span>
               </div>
               <div className="card-body">
@@ -320,7 +321,7 @@ function Desk() {
                     style={{ width: "100%", justifyContent: "center", marginBottom: "0.75rem" }}
                     onClick={() => dispatch({ type: "run-playbook" })}
                   >
-                    ▶ Run playbook (Clerk)
+                    Run playbook (Clerk)
                   </button>
                 )}
 
@@ -374,17 +375,15 @@ function Desk() {
               </div>
             </div>
 
-            {/* ── Tray / two-seat agreement panel ── */}
             <div className="tray-panel">
               <div className="card-header">
-                <h2>📤 Outbound tray</h2>
+                <h2>Outbound tray</h2>
               </div>
               <div className="tray-steps">
 
-                {/* Step 1 — Stage */}
                 <div className="tray-step">
                   <div className={`tray-step-num ${step1Done ? "done" : acceptedN > 0 ? "active" : ""}`}>
-                    {step1Done ? "✓" : "1"}
+                    {step1Done ? "OK" : "1"}
                   </div>
                   <div>
                     <div className="tray-step-label">Stage the letter</div>
@@ -402,10 +401,9 @@ function Desk() {
                   </div>
                 </div>
 
-                {/* Step 2 — Your agree */}
                 <div className="tray-step">
                   <div className={`tray-step-num ${alreadyThis ? "done" : step1Done ? "active" : ""}`}>
-                    {alreadyThis ? "✓" : "2"}
+                    {alreadyThis ? "OK" : "2"}
                   </div>
                   <div>
                     <div className="tray-step-label">You agree ({myName})</div>
@@ -422,16 +420,15 @@ function Desk() {
                         onClick={() => dispatch({ type: "agree", seat, tabId })}
                         className="sm accept"
                       >
-                        I agree — {myName}
+                        I agree - {myName}
                       </button>
                     </div>
                   </div>
                 </div>
 
-                {/* Step 3 — Other seat agree */}
                 <div className="tray-step">
                   <div className={`tray-step-num ${step3Done ? "done" : alreadyThis && !sameTab ? "active" : ""}`}>
-                    {step3Done ? "✓" : "3"}
+                    {step3Done ? "OK" : "3"}
                   </div>
                   <div>
                     <div className="tray-step-label">{otherName} agrees</div>
@@ -441,21 +438,20 @@ function Desk() {
                     {!step3Done && step1Done && (
                       <div className="tray-step-body">
                         <a href={otherSeat} target="_blank" rel="noreferrer">
-                          <button className="sm" type="button">Open {otherName}'s tab →</button>
+                          <button className="sm" type="button">Open {otherName}'s tab</button>
                         </a>
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Step 4 — Countersign */}
                 <div className="tray-step">
                   <div className={`tray-step-num ${step4Done ? "done" : canCountersign ? "active" : ""}`}>
-                    {step4Done ? "✓" : "4"}
+                    {step4Done ? "OK" : "4"}
                   </div>
                   <div>
                     <div className="tray-step-label">Countersign &amp; download</div>
-                    <div className="tray-step-sub">Downloads letter + .ics — not emailed</div>
+                    <div className="tray-step-sub">Downloads letter + .ics - not emailed</div>
                     <div className="tray-step-body">
                       <button
                         type="button"
@@ -472,15 +468,14 @@ function Desk() {
               </div>
               {packet.countersigned && (
                 <div className="card-footer">
-                  <span className="msg-ok">✓ Letter + notice downloaded. Still not emailed — by design.</span>
+                  <span className="msg-ok">Letter and notice downloaded. Still not emailed - by design.</span>
                 </div>
               )}
             </div>
 
-            {/* ── Playbook panel ── */}
             <div className="playbook-panel">
               <div className="card-header">
-                <h2>📋 Costly-clause playbook</h2>
+                <h2>Costly-clause playbook</h2>
               </div>
               <ul className="playbook-items">
                 {PLAYBOOK_RULES.map((r) => (
@@ -489,11 +484,11 @@ function Desk() {
               </ul>
               <div className="playbook-score-row">
                 <span>Recall <span className="playbook-score-val">{playbookScore.costlyRecallN}</span></span>
-                <span>·</span>
+                <span>/</span>
                 <span>Silence <span className="playbook-score-val">{playbookScore.silenceN}</span></span>
-                <span>·</span>
+                <span>/</span>
                 <a href="/?view=playbook" onClick={(e) => go("/?view=playbook", e)}>
-                  Full evaluation →
+                  Full evaluation
                 </a>
               </div>
             </div>
