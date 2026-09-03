@@ -376,11 +376,63 @@ button.ghost {
   font-size: 0.8rem;
 }
 
+.scorecard {
+  margin: 1rem 0 0;
+}
+
+.scorecard h2 {
+  margin-bottom: 0.35rem;
+}
+
+.score-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) auto auto;
+  gap: 0.75rem;
+  align-items: baseline;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--rule);
+  font-variant-numeric: tabular-nums;
+}
+
+.score-frac,
+.score-rate {
+  font-family: "Newsreader", Georgia, serif;
+  font-size: 1.15rem;
+}
+
+.score-rate {
+  min-width: 3.2rem;
+  text-align: right;
+}
+
+.score-row.warn .score-rate,
+.score-row.warn .score-frac {
+  color: var(--seal);
+}
+
+.score-row.fail,
+.fail-note {
+  color: var(--never);
+}
+
+.fail-note {
+  margin: 0.6rem 0 0;
+  font-size: 0.88rem;
+}
+
+.tradeoff {
+  margin: 1.25rem 0 0;
+  max-width: 42rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
 @media (max-width: 840px) {
   .grid,
   .meta,
   .top,
-  .stats {
+  .stats,
+  .score-row {
     grid-template-columns: 1fr;
     display: grid;
   }

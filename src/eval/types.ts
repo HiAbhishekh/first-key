@@ -4,7 +4,16 @@ export type Cohort =
   | "paraphrase"
   | "decoy"
   | "injection"
-  | "known-gap";
+  | "known-gap"
+  | "held-out";
+
+/**
+ * development = playbook spec (Maya + exact subsets).
+ * held-out = unseen wrapping, authored after that spec was frozen.
+ * adversarial = decoys, injection, deposit variants.
+ * robustness = paraphrases (expected misses).
+ */
+export type Split = "development" | "held-out" | "adversarial" | "robustness";
 
 /** ordinary = stay quiet. costly = pin these rule ids. costly-paraphrase = meaning present, needle absent. */
 export type ClauseKind = "ordinary" | "costly" | "costly-paraphrase";
@@ -29,6 +38,7 @@ export type LabeledLease = {
   id: string;
   title: string;
   cohort: Cohort;
+  split: Split;
   clauses: LocatedClause[];
   text: string;
 };
@@ -54,6 +64,7 @@ export type FixtureScore = {
   id: string;
   title: string;
   cohort: Cohort;
+  split: Split;
   extractive: {
     expected: string[];
     got: string[];
@@ -91,6 +102,9 @@ export type CohortRollup = {
 
 export type CorpusSummary = {
   fixtureCount: number;
+  development: CohortRollup;
+  heldOut: CohortRollup;
+  adversarial: CohortRollup;
   extractive: CohortRollup;
   paraphrase: CohortRollup;
   overallExtractive: CohortRollup;

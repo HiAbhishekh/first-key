@@ -1,8 +1,7 @@
 import { LEASE_TEXT } from "../gold";
 import { PLAYBOOK_RULES } from "../playbook";
-import { leaseNeedleInHabitability } from "./corpus";
 import { labelMayaChen, playbookIds } from "./maya";
-import { corpus, pct, ratio, scoreCanonical, scoreCorpus, scoreLease } from "./score";
+import { corpus, pct, ratio, scoreCanonical, scoreCorpus, scoreLease, scoreProbe } from "./score";
 import type { EvalGate, FixtureScore, Ratio } from "./types";
 
 function eq1(rate: number): boolean {
@@ -25,13 +24,16 @@ export function runEvalGates(): EvalGate[] {
   const scoredMaya = scoreCanonical();
   const summary = scoreCorpus();
   const extractive = summary.extractive;
+  const development = summary.development;
+  const heldOut = summary.heldOut;
+  const adversarial = summary.adversarial;
   const paraphraseAll = byId(summary.fixtures, "paraphrase-all");
   const empty = byId(summary.fixtures, "ext-pet0-early0-auto0-hike0");
   const noRenewal = byId(summary.fixtures, "ext-pet1-early1-auto0-hike0");
   const injection = byId(summary.fixtures, "injection-habitability");
   const decoyPet = byId(summary.fixtures, "decoy-pet-sitting");
   const twoMonth = byId(summary.fixtures, "two-month-deposit");
-  const probe = scoreLease(leaseNeedleInHabitability());
+  const probe = scoreProbe();
 
   const goldIds = playbookIds().slice().sort().join(",");
   const mayaLoud = [...new Set(maya.clauses.flatMap((c) => c.ruleIds))]
@@ -101,14 +103,49 @@ export function runEvalGates(): EvalGate[] {
       detail: `recall ${fmt(scoredMaya.extractive.recall)} · precision ${fmt(scoredMaya.extractive.precision)} · silence ${fmt(scoredMaya.silence)}`,
     },
     {
-      id: "eval-corpus-size",
-      name: "Labeled corpus has at least 24 leases",
-      pass: summary.fixtureCount >= 24,
-      detail: `${summary.fixtureCount} labeled leases (canonical, 16 exact subsets, decoys, paraphrases, injection).`,
+      id: "eval-splits",
+      name: "Corpus is split into development, held-out, adversarial, and paraphrase",
+      pass:
+        development.fixtures === 17 &&
+        heldOut.fixtures === 7 &&
+        adversarial.fixtures === 5 &&
+        summary.paraphrase.fixtures === 5 &&
+        summary.fixtures.every((s) => s.id.startsWith("held-") === (s.split === "held-out")),
+      detail: `development ${development.fixtures} · held-out ${heldOut.fixtures} · adversarial ${adversarial.fixtures} · paraphrase ${summary.paraphrase.fixtures}`,
+    },
+    {
+      id: "eval-development",
+      name: "Development costly-clause recall, precision, and boilerplate silence are 1.00",
+      pass:
+        eq1(development.extractiveRecall.rate) &&
+        eq1(development.extractivePrecision.rate) &&
+        eq1(development.silence.rate) &&
+        development.extractiveRecall.total === 36,
+      detail: `${development.fixtures} leases · recall ${fmt(development.extractiveRecall)} · precision ${fmt(development.extractivePrecision)} · silence ${fmt(development.silence)}`,
+    },
+    {
+      id: "eval-heldout",
+      name: "Held-out costly-clause recall, precision, and boilerplate silence are 1.00",
+      pass:
+        eq1(heldOut.extractiveRecall.rate) &&
+        eq1(heldOut.extractivePrecision.rate) &&
+        eq1(heldOut.silence.rate) &&
+        heldOut.extractiveRecall.total > 0 &&
+        heldOut.fixtures === 7,
+      detail: `${heldOut.fixtures} leases · recall ${fmt(heldOut.extractiveRecall)} · precision ${fmt(heldOut.extractivePrecision)} · silence ${fmt(heldOut.silence)}`,
+    },
+    {
+      id: "eval-adversarial-split",
+      name: "Adversarial costly-clause recall, precision, and boilerplate silence are 1.00",
+      pass:
+        eq1(adversarial.extractiveRecall.rate) &&
+        eq1(adversarial.extractivePrecision.rate) &&
+        eq1(adversarial.silence.rate),
+      detail: `${adversarial.fixtures} leases · recall ${fmt(adversarial.extractiveRecall)} · precision ${fmt(adversarial.extractivePrecision)} · silence ${fmt(adversarial.silence)}`,
     },
     {
       id: "eval-extractive-corpus",
-      name: "Extractive corpus recall, precision, and silence are 1.00",
+      name: "All extractive labels (dev + held-out + adversarial) stay at 1.00",
       pass:
         eq1(extractive.extractiveRecall.rate) &&
         eq1(extractive.extractivePrecision.rate) &&
@@ -176,9 +213,9 @@ export function runEvalGates(): EvalGate[] {
     },
     {
       id: "eval-harness-false-pin",
-      name: "Silence metric drops when a needle is copied into habitability",
+      name: "Adversarial regression: copied needle into habitability fails silence",
       pass: probe.silence.rate < 1 && probe.extractive.fp.includes("pet-fee"),
-      detail: `probe silence ${fmt(probe.silence)} · fp ${probe.extractive.fp.join(", ")}. The number can fail.`,
+      detail: `Intentional mutation, not production silence. Probe ${fmt(probe.silence)} · fp ${probe.extractive.fp.join(", ")}.`,
     },
     {
       id: "eval-harness-forced-miss",

@@ -353,15 +353,15 @@ function Desk() {
           <div className="card">
             <h2>Playbook</h2>
             <p className="muted">
-              {playbookScore.costlyRecallN} costly clauses pinned ·{" "}
-              {playbookScore.silenceN} ordinary clauses quiet. Deposit is out
+              {playbookScore.costlyRecallN} costly-clause recall ·{" "}
+              {playbookScore.silenceN} boilerplate silence. Deposit is out
               of the loud set.
               {" · "}
               <a
                 href="/?view=playbook"
                 onClick={(e) => go("/?view=playbook", e)}
               >
-                Full check
+                Clerk playbook evaluation
               </a>
             </p>
             <ul className="loud">

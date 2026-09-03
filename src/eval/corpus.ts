@@ -1,7 +1,8 @@
 import { PLAYBOOK_RULES } from "../playbook";
+import { buildHeldOut } from "./heldout";
 import { assembleLease } from "./locate";
 import { labelMayaChen } from "./maya";
-import type { ClauseKind, ClauseSpec, LabeledLease } from "./types";
+import type { ClauseKind, ClauseSpec, LabeledLease, Split } from "./types";
 
 function needle(id: string): string {
   const rule = PLAYBOOK_RULES.find((r) => r.id === id);
@@ -94,6 +95,13 @@ function renewalClause(auto: boolean, hike: boolean): ClauseSpec {
   return spec("c13-renewal", "13. RENEWAL", RENEWAL_OFF, [], []);
 }
 
+function splitFor(cohort: LabeledLease["cohort"]): Split {
+  if (cohort === "paraphrase") return "robustness";
+  if (cohort === "held-out") return "held-out";
+  if (cohort === "extractive" || cohort === "canonical") return "development";
+  return "adversarial";
+}
+
 function labeled(
   id: string,
   title: string,
@@ -101,7 +109,7 @@ function labeled(
   clauses: ClauseSpec[],
 ): LabeledLease {
   const assembled = assembleLease(clauses);
-  return { id, title, cohort, ...assembled };
+  return { id, title, cohort, split: splitFor(cohort), ...assembled };
 }
 
 function skeleton(
@@ -368,7 +376,7 @@ export function buildCorpus(): LabeledLease[] {
     ),
   );
 
-  return leases;
+  return [...leases, ...buildHeldOut()];
 }
 
 export function extractiveCohort(leases: LabeledLease[]): LabeledLease[] {

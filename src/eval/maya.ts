@@ -51,6 +51,7 @@ export function labelMayaChen(): LabeledLease {
     id: "maya-chen",
     title: "Maya Chen sample lease",
     cohort: "canonical",
+    split: "development",
     text: LEASE_TEXT,
     clauses: locateClauses(LEASE_TEXT, specs),
   };

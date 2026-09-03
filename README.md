@@ -58,30 +58,22 @@ npm test
 npm run build
 ```
 
-## Playbook check
+## Clerk playbook evaluation
 
-The clerk pins four costly clauses and stays quiet on the rest. The security deposit is out of the loud set (one month, itemized under the Civil Code).
+The clerk is scored on three questions: did it catch the costly clauses, avoid inventing them, and leave ordinary paper alone? Deposit is out of the loud set.
 
-Gold is labeled per clause, then scored against `scanLease`. `npm test` prints the table and fails if recall, precision, or silence move off 1.00 on the extractive set. Paraphrases of the same costs are expected misses — this playbook is extractive, not a model.
+Gold is labeled per clause, independent of `scanLease`. The development set specified the playbook. Held-out leases were written after that freeze, with new wrapping of the same needles. Paraphrases of the same costs are expected misses. `npm test` fails if development, held-out, or adversarial costly-clause recall, precision, or boilerplate silence leave 1.00. A copied-needle probe is required to fail silence; that 20/21 is an intentional mutation, not the production number.
 
-On the Maya Chen sample lease:
+| | Costly-clause recall | Precision | Boilerplate silence |
+| --- | --- | --- | --- |
+| Maya Chen sample | 4/4 (1.00) | 4/4 (1.00) | 18/18 (1.00) |
+| Development (17 leases) | 36/36 (1.00) | 36/36 (1.00) | 326/326 (1.00) |
+| Held-out (7 leases) | 14/14 (1.00) | 14/14 (1.00) | 54/54 (1.00) |
+| Adversarial (5 leases) | 18/18 (1.00) | 18/18 (1.00) | 91/91 (1.00) |
 
-| | |
-| --- | --- |
-| Costly-clause recall | 4/4 (1.00) |
-| Precision | 4/4 (1.00) |
-| Silence on ordinary clauses | 18/18 (1.00) |
+Paraphrase-all semantic recall is **0/4 (0.00)**. Mixed paraphrases are 12/16 (0.75): exact needles still pin; the restated rule is a miss.
 
-On the labeled corpus (27 leases: exact subsets, decoys, injection, two-month deposit, paraphrases):
-
-| | |
-| --- | --- |
-| Extractive recall | 54/54 (1.00) |
-| Extractive precision | 54/54 (1.00) |
-| Silence | 417/417 (1.00) |
-| Paraphrase-all semantic recall | 0/4 (0.00) |
-
-Deposit is ordinary by design, including a two-month variant. Open `/?view=playbook` for the clause table.
+The playbook is optimized for high-confidence findings and silence, not unrestricted semantic generalization. Open `/?view=playbook`.
 
 ## Stack
 

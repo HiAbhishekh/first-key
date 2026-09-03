@@ -1,6 +1,6 @@
 import { PLAYBOOK_RULES, scanLease } from "../playbook";
 import type { ScanHit } from "../types";
-import { buildCorpus } from "./corpus";
+import { buildCorpus, leaseNeedleInHabitability } from "./corpus";
 import { labelMayaChen, mayaLoudRuleIds, playbookIds } from "./maya";
 import type {
   ClauseRow,
@@ -87,6 +87,7 @@ export function scoreLease(lease: LabeledLease): FixtureScore {
     id: lease.id,
     title: lease.title,
     cohort: lease.cohort,
+    split: lease.split,
     extractive: {
       expected: extractiveExpected,
       got,
@@ -141,13 +142,19 @@ export function corpus(): LabeledLease[] {
 
 export function scoreCorpus(leases: LabeledLease[] = corpus()): CorpusSummary {
   const fixtures = leases.map(scoreLease);
-  const extractive = fixtures.filter((s) => s.cohort !== "paraphrase");
-  const paraphrase = fixtures.filter((s) => s.cohort === "paraphrase");
+  const development = fixtures.filter((s) => s.split === "development");
+  const heldOut = fixtures.filter((s) => s.split === "held-out");
+  const adversarial = fixtures.filter((s) => s.split === "adversarial");
+  const extractive = fixtures.filter((s) => s.split !== "robustness");
+  const paraphrase = fixtures.filter((s) => s.split === "robustness");
   const paraphraseAll = fixtures.find((s) => s.id === "paraphrase-all");
   const paraphraseMixed = paraphrase.filter((s) => s.id !== "paraphrase-all");
   return {
     fixtureCount: fixtures.length,
-    extractive: rollup("extractive+canonical+decoy+injection", extractive),
+    development: rollup("development", development),
+    heldOut: rollup("held-out", heldOut),
+    adversarial: rollup("adversarial", adversarial),
+    extractive: rollup("extractive-labels", extractive),
     paraphrase: rollup("paraphrase", paraphrase),
     overallExtractive: rollup("all-extractive-labels", fixtures),
     overallSilence: addRatios(fixtures.map((s) => s.silence)),
@@ -155,6 +162,10 @@ export function scoreCorpus(leases: LabeledLease[] = corpus()): CorpusSummary {
     paraphraseMixed: addRatios(paraphraseMixed.map((s) => s.semantic.recall)),
     fixtures,
   };
+}
+
+export function scoreProbe(): FixtureScore {
+  return scoreLease(leaseNeedleInHabitability());
 }
 
 export function scoreCanonical(): FixtureScore {
@@ -174,7 +185,7 @@ export function canonicalSummary() {
     precisionN: `${scored.extractive.precision.hits}/${scored.extractive.precision.total}`,
     silence: scored.silence.rate,
     silenceN: `${scored.silence.quiet}/${scored.silence.ordinary}`,
-    note: "Extractive playbook. Same costs with different wording are expected misses. Full table at ?view=playbook.",
+    note: "The clerk uses a bounded playbook for high-confidence findings and silence, not unrestricted semantic generalization. Full table at ?view=playbook.",
     playbookMatchesGold: playbookIds().every((id) => loud.includes(id)) && loud.length === playbookIds().length,
   };
 }
