@@ -10,11 +10,11 @@ import { go } from "./nav";
 import { usePacket } from "./store";
 import type { Application, Stage } from "./types";
 
-const STAGES: { id: Stage; label: string }[] = [
-  { id: "listing", label: "Listing" },
-  { id: "lease", label: "Lease" },
-  { id: "application", label: "Application" },
-  { id: "outbound", label: "Outbound" },
+const STAGES: { id: Stage; label: string; hint: string }[] = [
+  { id: "listing", label: "① Listing", hint: "Pull terms" },
+  { id: "lease",   label: "② Lease",   hint: "Clerk scans" },
+  { id: "application", label: "③ Application", hint: "Fill form" },
+  { id: "outbound", label: "④ Outbound", hint: "Both agree" },
 ];
 
 const APP_FIELDS: {
@@ -22,13 +22,13 @@ const APP_FIELDS: {
   label: string;
   type: string;
 }[] = [
-  { key: "fullName", label: "Full name", type: "text" },
-  { key: "email", label: "Email", type: "email" },
-  { key: "phone", label: "Phone", type: "tel" },
-  { key: "unit", label: "Unit", type: "text" },
-  { key: "moveIn", label: "Move-in", type: "date" },
-  { key: "monthlyIncome", label: "Monthly income", type: "text" },
-  { key: "hasPet", label: "Pet in the home (yes/no)", type: "text" },
+  { key: "fullName",      label: "Full name",           type: "text"  },
+  { key: "email",         label: "Email",               type: "email" },
+  { key: "phone",         label: "Phone",               type: "tel"   },
+  { key: "unit",          label: "Unit",                type: "text"  },
+  { key: "moveIn",        label: "Move-in date",        type: "date"  },
+  { key: "monthlyIncome", label: "Monthly income ($)",  type: "text"  },
+  { key: "hasPet",        label: "Pet in the home?",    type: "text"  },
 ];
 
 export default function App() {
@@ -43,15 +43,30 @@ export default function App() {
   return <Desk />;
 }
 
+function WebMCPStatus({ supported }: { supported: boolean }) {
+  return (
+    <span className={`webmcp-pill ${supported ? "on" : "off"}`}>
+      <span className="webmcp-dot" />
+      {supported ? "WebMCP active — AI sees live tools" : "No WebMCP — desk works without AI"}
+    </span>
+  );
+}
+
 function Desk() {
   const { packet, dispatch, seat, tabId, highlightId, setHighlightId } =
     usePacket();
-  const otherSeat = seat === "parent" ? "?seat=principal" : "?seat=parent";
-  const alreadyThisSeat =
-    seat === "parent" ? packet.agreedParent : packet.agreedPrincipal;
-  const sameTabAsOtherSeat =
-    (seat === "parent" && packet.agreedPrincipalTab === tabId) ||
-    (seat === "principal" && packet.agreedParentTab === tabId);
+  const otherSeat   = seat === "parent" ? "?seat=principal" : "?seat=parent";
+  const myName      = seat === "parent" ? PARENT : TENANT;
+  const otherName   = seat === "parent" ? TENANT  : PARENT;
+  const alreadyThis = seat === "parent" ? packet.agreedParent : packet.agreedPrincipal;
+  const sameTab     =
+    (seat === "parent"    && packet.agreedPrincipalTab === tabId) ||
+    (seat === "principal" && packet.agreedParentTab    === tabId);
+
+  const [webmcpOn, setWebmcpOn] = useState(false);
+  useEffect(() => {
+    setWebmcpOn(typeof (document as unknown as Record<string, unknown>).modelContext !== "undefined");
+  }, []);
 
   const highlightedQuote = useMemo(() => {
     if (!highlightId) return null;
@@ -64,9 +79,7 @@ function Desk() {
     if (i === -1) return LEASE_TEXT;
     return (
       LEASE_TEXT.slice(0, i) +
-      "⟦" +
-      highlightedQuote +
-      "⟧" +
+      "⟦" + highlightedQuote + "⟧" +
       LEASE_TEXT.slice(i + highlightedQuote.length)
     );
   }, [highlightedQuote]);
@@ -75,303 +88,419 @@ function Desk() {
     if (!packet.outbound || !bothAgreed(packet)) return;
     dispatch({ type: "countersign" });
     downloadText("maya-chen-landlord-letter.txt", packet.outbound.letter, "text/plain");
-    downloadText("maya-chen-notice.ics", packet.outbound.ics, "text/calendar");
+    downloadText("maya-chen-notice.ics",          packet.outbound.ics,    "text/calendar");
   }
 
-  const clerkTools = toolsOnStage(packet);
+  const clerkTools    = toolsOnStage(packet);
   const canCountersign = Boolean(packet.outbound) && bothAgreed(packet);
-  const openN = packet.findings.filter((f) => f.status === "open").length;
-  const dismissedN = packet.findings.filter((f) => f.status === "dismissed").length;
+  const openN         = packet.findings.filter((f) => f.status === "open").length;
+  const acceptedN     = packet.findings.filter((f) => f.status === "accepted").length;
   const playbookScore = canonicalSummary();
 
+  /* Tray step logic */
+  const step1Done = Boolean(packet.outbound);
+  const step3Done = seat === "parent" ? packet.agreedPrincipal : packet.agreedParent;
+  const step4Done = packet.countersigned;
+
   return (
-    <div className="desk">
-      <PacketTools
-        packet={packet}
-        dispatch={dispatch}
-        onJump={setHighlightId}
-      />
-
-      <header className="top">
-        <div>
-          <p className="kicker">First apartment desk</p>
-          <h1>First Key</h1>
-          <p className="lede">
-            Maya Chen and a parent share this packet. The clerk may pin and
-            draft. The clerk cannot send.
-          </p>
+    <>
+      {/* ── Sticky navbar ── */}
+      <nav className="navbar">
+        <div className="navbar-inner">
+          <span className="navbar-logo">🔑 First Key</span>
+          <span className="navbar-tagline">First-apartment AI desk · Maya Chen &amp; Priya Chen</span>
+          <div className="navbar-actions">
+            <WebMCPStatus supported={webmcpOn} />
+            <button
+              className="ghost sm"
+              onClick={(e) => go("/?view=playbook", e)}
+              title="View clerk evaluation scorecard"
+            >
+              Eval scorecard
+            </button>
+            <button
+              className="ghost sm danger"
+              onClick={() => dispatch({ type: "reset" })}
+              title="Reset all packet state"
+            >
+              Reset
+            </button>
+          </div>
         </div>
-        <p className="disclaimer">Not legal advice.</p>
-      </header>
-
-      <p className="muted">
-        Clerk tools on this stage: {clerkTools.join(", ")}
-      </p>
-      <div className="permissions" aria-label="Clerk tools on this stage">
-        {clerkTools.map((name) => (
-          <span key={name} className="perm on">
-            {name}
-          </span>
-        ))}
-        {WITHHELD_TOOLS.map((name) => (
-          <span key={name} className="perm never">
-            {name}
-          </span>
-        ))}
-      </div>
-
-      <nav className="stages">
-        {STAGES.map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            className={packet.stage === s.id ? "stage active" : "stage"}
-            onClick={() => dispatch({ type: "set-stage", stage: s.id })}
-          >
-            {s.label}
-          </button>
-        ))}
       </nav>
 
-      <p className="seat">
-        You are <strong>{seat === "parent" ? PARENT : TENANT}</strong>
-        {" · "}
-        <a href={otherSeat} target="_blank" rel="noreferrer">
-          Open {seat === "parent" ? "Maya" : "parent"} seat
-        </a>
-        {" · "}
-        two tabs share this packet. Same tab cannot be both people.
-      </p>
+      <PacketTools packet={packet} dispatch={dispatch} onJump={setHighlightId} />
 
-      <div className="grid">
-        <section className="paper">
-          {packet.stage === "listing" && (
-            <>
-              <h2>{LISTING.title}</h2>
-              <dl className="meta">
-                <div>
-                  <dt>Rent</dt>
-                  <dd>{LISTING.rent}</dd>
-                </div>
-                <div>
-                  <dt>Term</dt>
-                  <dd>{LISTING.term}</dd>
-                </div>
-                <div>
-                  <dt>Deposit</dt>
-                  <dd>{LISTING.deposit}</dd>
-                </div>
-              </dl>
-              <p>{LISTING.note}</p>
-              <button
-                type="button"
-                className="primary"
-                onClick={() => dispatch({ type: "pull-listing" })}
-              >
-                Pull terms into packet
-              </button>
-            </>
-          )}
+      <main className="page">
+        {/* ── Hero intro ── */}
+        <div className="intro">
+          <div className="intro-row">
+            <div>
+              <div className="intro-title">Maya's first apartment</div>
+              <p className="intro-sub">
+                An AI clerk can read the lease, flag costly clauses, and draft a landlord letter.
+                The clerk <strong>cannot</strong> send email, sign anything, or agree on behalf of a person.
+                Two humans must agree before the letter downloads.
+              </p>
+              <p className="intro-disclaimer">Not legal advice.</p>
+            </div>
+          </div>
+        </div>
 
-          {packet.stage === "lease" && (
-            <>
-              <h2>Lease</h2>
-              <pre className="lease">{leaseHtml}</pre>
-            </>
-          )}
+        {/* ── How it works strip ── */}
+        <div className="how-strip">
+          <strong style={{ fontSize: "0.8rem" }}>How to test:</strong>
+          <span className="how-step"><span className="how-num">1</span> Pull listing terms on the Listing tab</span>
+          <span className="how-arrow">→</span>
+          <span className="how-step"><span className="how-num">2</span> Ask AI to "run the playbook" on the Lease tab</span>
+          <span className="how-arrow">→</span>
+          <span className="how-step"><span className="how-num">3</span> Accept findings, Stage outbound</span>
+          <span className="how-arrow">→</span>
+          <span className="how-step"><span className="how-num">4</span> Open a 2nd tab as the other person, both agree → Countersign</span>
+        </div>
 
-          {packet.stage === "application" && (
-            <>
-              <h2>Application</h2>
-              <form
-                className="app-form"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  dispatch({ type: "human-submit" });
-                }}
-              >
-                {APP_FIELDS.map((f) => (
-                  <label key={f.key}>
-                    {f.label}
-                    <input
-                      type={f.type}
-                      value={String(packet.application[f.key])}
-                      onChange={(e) =>
-                        dispatch({
-                          type: "fill-application",
-                          field: f.key,
-                          value: e.target.value,
-                        })
-                      }
-                    />
-                  </label>
-                ))}
-                <button type="submit" className="primary">
-                  Submit application
+        {/* ── Seat indicator ── */}
+        <div className="seat-banner">
+          <span>You are: <span className="seat-you">{myName}</span></span>
+          <span style={{ color: "var(--border-dk)" }}>·</span>
+          <a href={otherSeat} target="_blank" rel="noreferrer">
+            Open {otherName}'s seat in a new tab →
+          </a>
+          <span style={{ color: "var(--border-dk)" }}>·</span>
+          <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>Both tabs share the same live packet</span>
+        </div>
+
+        {/* ── Stage tabs ── */}
+        <div className="stage-bar">
+          {STAGES.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              className={`stage-btn ${packet.stage === s.id ? "active" : ""}`}
+              onClick={() => dispatch({ type: "set-stage", stage: s.id })}
+            >
+              {s.label}
+              <span className="stage-badge">{s.hint}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* ── Main grid ── */}
+        <div className="desk-grid">
+
+          {/* ── Left: stage content ── */}
+          <div>
+            {packet.stage === "listing" && (
+              <div className="listing-card">
+                <h2>{LISTING.title}</h2>
+                <dl className="listing-meta">
+                  <div><dt>Monthly rent</dt><dd>{LISTING.rent}</dd></div>
+                  <div><dt>Lease term</dt><dd>{LISTING.term}</dd></div>
+                  <div><dt>Security deposit</dt><dd>{LISTING.deposit}</dd></div>
+                </dl>
+                <p className="listing-note">{LISTING.note}</p>
+                <button
+                  type="button"
+                  className="primary"
+                  onClick={() => dispatch({ type: "pull-listing" })}
+                >
+                  Pull terms into packet
                 </button>
-                {packet.application.humanSubmitted && (
-                  <p className="ok">
-                    Saved on this page. It was not emailed.
+                {packet.listingPulled && (
+                  <p className="msg-ok" style={{ marginTop: "0.75rem" }}>
+                    ✓ Listing terms saved to packet. Move to the Lease tab.
                   </p>
                 )}
-              </form>
-            </>
-          )}
+              </div>
+            )}
 
-          {packet.stage === "outbound" && (
-            <>
-              <h2>Staged outbound</h2>
-              {packet.outbound ? (
-                <pre className="lease">{packet.outbound.letter}</pre>
-              ) : (
-                <p>Accept findings on the lease, then stage. The clerk cannot send.</p>
-              )}
-            </>
-          )}
-        </section>
-
-        <section className="side">
-          <div className="card">
-            <h2>Findings</h2>
-            <p className="muted">
-              {openN} open · {dismissedN} dismissed · Clerk never signs as Maya
-            </p>
             {packet.stage === "lease" && (
-              <button
-                type="button"
-                onClick={() => dispatch({ type: "run-playbook" })}
-              >
-                Run playbook (Clerk)
-              </button>
+              <div className="lease-card">
+                <div className="lease-card-header">
+                  <h2>Residential Lease Agreement</h2>
+                  {highlightId && (
+                    <button className="sm ghost" onClick={() => setHighlightId("")}>
+                      Clear highlight
+                    </button>
+                  )}
+                </div>
+                <pre className="lease-text">{leaseHtml}</pre>
+              </div>
             )}
-            <ul className="findings">
-              {packet.findings.map((f) => (
-                <li
-                  key={f.id}
-                  className={highlightId === f.id ? "finding hi" : "finding"}
+
+            {packet.stage === "application" && (
+              <div className="app-card">
+                <h2 style={{ marginBottom: "1rem" }}>Rental Application</h2>
+                <p className="msg-info" style={{ marginBottom: "1rem" }}>
+                  This form is filled by Maya (the human). The AI clerk can read it but cannot submit it.
+                </p>
+                <form
+                  className="app-form"
+                  onSubmit={(e) => { e.preventDefault(); dispatch({ type: "human-submit" }); }}
                 >
-                  <header>
-                    <span className="author">{f.author}</span>
-                    <strong>{f.title}</strong>
-                  </header>
-                  <p>{f.detail}</p>
-                  <p className="cost">{f.costNote}</p>
-                  <div className="row">
-                    <button
-                      type="button"
-                      onClick={() => setHighlightId(f.id)}
-                    >
-                      Jump
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        dispatch({
-                          type: "set-finding-status",
-                          id: f.id,
-                          status: "accepted",
-                        })
-                      }
-                    >
-                      Accept
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        dispatch({
-                          type: "set-finding-status",
-                          id: f.id,
-                          status: "dismissed",
-                        })
-                      }
-                    >
-                      Dismiss
-                    </button>
-                    <em>{f.status}</em>
+                  {APP_FIELDS.map((f) => (
+                    <label key={f.key}>
+                      {f.label}
+                      <input
+                        type={f.type}
+                        value={String(packet.application[f.key])}
+                        onChange={(e) =>
+                          dispatch({ type: "fill-application", field: f.key, value: e.target.value })
+                        }
+                      />
+                    </label>
+                  ))}
+                  <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                    <button type="submit" className="primary">Submit application</button>
+                    {packet.application.humanSubmitted && (
+                      <span className="msg-ok">✓ Saved — not emailed</span>
+                    )}
                   </div>
-                </li>
-              ))}
-            </ul>
+                </form>
+              </div>
+            )}
+
+            {packet.stage === "outbound" && (
+              <div className="outbound-card">
+                <div className="lease-card-header">
+                  <h2>Staged outbound letter</h2>
+                </div>
+                {packet.outbound ? (
+                  <pre className="outbound-letter">{packet.outbound.letter}</pre>
+                ) : (
+                  <div className="outbound-empty">
+                    <div className="outbound-empty-icon">📬</div>
+                    <p style={{ fontWeight: 600, marginBottom: "0.25rem" }}>Nothing staged yet</p>
+                    <p style={{ fontSize: "0.85rem", color: "var(--muted)" }}>
+                      Go to the Lease tab → accept findings → Stage outbound.
+                      The clerk drafts the letter; it waits here for two humans to agree.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
-          <div className="card">
-            <h2>Tray</h2>
-            <p className="muted">
-              The letter and calendar hold wait here. Countersign downloads
-              them.
-            </p>
-            <button
-              type="button"
-              disabled={!packet.findings.some((f) => f.status === "accepted")}
-              onClick={() => dispatch({ type: "stage-outbound" })}
-            >
-              Stage outbound
-            </button>
-            <p className="muted">
-              Maya {packet.agreedPrincipal ? "agreed" : "has not agreed"}
-              {" · "}
-              Parent {packet.agreedParent ? "agreed" : "has not agreed"}
-            </p>
-            <button
-              type="button"
-              disabled={!packet.outbound || alreadyThisSeat || sameTabAsOtherSeat}
-              onClick={() => dispatch({ type: "agree", seat, tabId })}
-            >
-              I agree to this letter ({seat === "parent" ? PARENT : TENANT})
-            </button>
-            <button
-              type="button"
-              className="primary"
-              disabled={!canCountersign}
-              onClick={countersign}
-            >
-              Countersign and download
-            </button>
-            {sameTabAsOtherSeat && (
-              <p className="muted">
-                This tab already agreed as the other person. Open the other
-                seat in a new tab.
-              </p>
-            )}
-            {packet.outbound && !bothAgreed(packet) && !sameTabAsOtherSeat && (
-              <p className="muted">
-                Open the other seat in a new tab. Both people need to agree.
-              </p>
-            )}
-            {packet.countersigned && (
-              <p className="ok">Downloaded letter + notice date. Still not emailed.</p>
-            )}
-            <button
-              type="button"
-              className="ghost"
-              onClick={() => dispatch({ type: "reset" })}
-            >
-              Reset packet
-            </button>
-          </div>
+          {/* ── Right: side panel ── */}
+          <div className="side-col">
 
-          <div className="card">
-            <h2>Playbook</h2>
-            <p className="muted">
-              {playbookScore.costlyRecallN} costly-clause recall ·{" "}
-              {playbookScore.silenceN} boilerplate silence. Deposit is out
-              of the loud set.
-              {" · "}
-              <a
-                href="/?view=playbook"
-                onClick={(e) => go("/?view=playbook", e)}
-              >
-                Clerk playbook evaluation
-              </a>
-            </p>
-            <ul className="loud">
-              {PLAYBOOK_RULES.map((r) => (
-                <li key={r.id}>{r.title}</li>
-              ))}
-            </ul>
+            {/* ── Tool capability panel ── */}
+            <div className="tools-panel">
+              <div className="card-header">
+                <h2>🤖 Clerk tools — stage: {packet.stage}</h2>
+              </div>
+              <div className="tools-section-label">Active now</div>
+              <div className="tool-chips">
+                {clerkTools.map((name) => (
+                  <span key={name} className="chip on">{name}</span>
+                ))}
+              </div>
+              <div className="tools-divider" />
+              <div className="tools-section-label">Always withheld (by design)</div>
+              <div className="tool-chips">
+                {WITHHELD_TOOLS.map((name) => (
+                  <span key={name} className="chip never">{name}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* ── Findings panel ── */}
+            <div className="card">
+              <div className="card-header">
+                <h2>📌 Findings</h2>
+                <span style={{ fontSize: "0.78rem", color: "var(--muted)", marginLeft: "auto" }}>
+                  {openN} open · {acceptedN} accepted
+                </span>
+              </div>
+              <div className="card-body">
+                {packet.stage === "lease" && (
+                  <button
+                    type="button"
+                    className="primary"
+                    style={{ width: "100%", justifyContent: "center", marginBottom: "0.75rem" }}
+                    onClick={() => dispatch({ type: "run-playbook" })}
+                  >
+                    ▶ Run playbook (Clerk)
+                  </button>
+                )}
+
+                {packet.findings.length === 0 ? (
+                  <p style={{ fontSize: "0.85rem", color: "var(--muted)", textAlign: "center", padding: "1.5rem 0" }}>
+                    No findings yet. Switch to the Lease tab and run the playbook.
+                  </p>
+                ) : (
+                  <ul className="findings-list" style={{ listStyle: "none", padding: 0 }}>
+                    {packet.findings.map((f) => (
+                      <li
+                        key={f.id}
+                        className={`finding ${f.status} ${highlightId === f.id ? "hi" : ""}`}
+                      >
+                        <div className="finding-head">
+                          <span className="finding-title">{f.title}</span>
+                          <span className="finding-author">{f.author}</span>
+                        </div>
+                        <p className="finding-body">{f.detail}</p>
+                        <p className="finding-cost">{f.costNote}</p>
+                        <div className="finding-actions">
+                          <button
+                            className="sm"
+                            onClick={() => setHighlightId(f.id)}
+                            title="Highlight in lease"
+                          >
+                            Jump
+                          </button>
+                          <button
+                            className="sm accept"
+                            onClick={() =>
+                              dispatch({ type: "set-finding-status", id: f.id, status: "accepted" })
+                            }
+                          >
+                            Accept
+                          </button>
+                          <button
+                            className="sm dismiss"
+                            onClick={() =>
+                              dispatch({ type: "set-finding-status", id: f.id, status: "dismissed" })
+                            }
+                          >
+                            Dismiss
+                          </button>
+                          <span className={`finding-status ${f.status}`}>{f.status}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            {/* ── Tray / two-seat agreement panel ── */}
+            <div className="tray-panel">
+              <div className="card-header">
+                <h2>📤 Outbound tray</h2>
+              </div>
+              <div className="tray-steps">
+
+                {/* Step 1 — Stage */}
+                <div className="tray-step">
+                  <div className={`tray-step-num ${step1Done ? "done" : acceptedN > 0 ? "active" : ""}`}>
+                    {step1Done ? "✓" : "1"}
+                  </div>
+                  <div>
+                    <div className="tray-step-label">Stage the letter</div>
+                    <div className="tray-step-sub">Clerk drafts; no send permission</div>
+                    <div className="tray-step-body">
+                      <button
+                        type="button"
+                        disabled={!packet.findings.some((f) => f.status === "accepted")}
+                        onClick={() => dispatch({ type: "stage-outbound" })}
+                        className="sm"
+                      >
+                        Stage outbound
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 2 — Your agree */}
+                <div className="tray-step">
+                  <div className={`tray-step-num ${alreadyThis ? "done" : step1Done ? "active" : ""}`}>
+                    {alreadyThis ? "✓" : "2"}
+                  </div>
+                  <div>
+                    <div className="tray-step-label">You agree ({myName})</div>
+                    <div className="tray-step-sub">This tab only</div>
+                    {sameTab && (
+                      <p className="msg-warn" style={{ marginTop: "0.4rem" }}>
+                        This tab already agreed as the other person.
+                      </p>
+                    )}
+                    <div className="tray-step-body">
+                      <button
+                        type="button"
+                        disabled={!packet.outbound || alreadyThis || sameTab}
+                        onClick={() => dispatch({ type: "agree", seat, tabId })}
+                        className="sm accept"
+                      >
+                        I agree — {myName}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 3 — Other seat agree */}
+                <div className="tray-step">
+                  <div className={`tray-step-num ${step3Done ? "done" : alreadyThis && !sameTab ? "active" : ""}`}>
+                    {step3Done ? "✓" : "3"}
+                  </div>
+                  <div>
+                    <div className="tray-step-label">{otherName} agrees</div>
+                    <div className="tray-step-sub">
+                      Must be a <strong>different browser tab</strong>
+                    </div>
+                    {!step3Done && step1Done && (
+                      <div className="tray-step-body">
+                        <a href={otherSeat} target="_blank" rel="noreferrer">
+                          <button className="sm" type="button">Open {otherName}'s tab →</button>
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Step 4 — Countersign */}
+                <div className="tray-step">
+                  <div className={`tray-step-num ${step4Done ? "done" : canCountersign ? "active" : ""}`}>
+                    {step4Done ? "✓" : "4"}
+                  </div>
+                  <div>
+                    <div className="tray-step-label">Countersign &amp; download</div>
+                    <div className="tray-step-sub">Downloads letter + .ics — not emailed</div>
+                    <div className="tray-step-body">
+                      <button
+                        type="button"
+                        className={`sm ${canCountersign ? "primary" : ""}`}
+                        disabled={!canCountersign}
+                        onClick={countersign}
+                      >
+                        Countersign and download
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+              {packet.countersigned && (
+                <div className="card-footer">
+                  <span className="msg-ok">✓ Letter + notice downloaded. Still not emailed — by design.</span>
+                </div>
+              )}
+            </div>
+
+            {/* ── Playbook panel ── */}
+            <div className="playbook-panel">
+              <div className="card-header">
+                <h2>📋 Costly-clause playbook</h2>
+              </div>
+              <ul className="playbook-items">
+                {PLAYBOOK_RULES.map((r) => (
+                  <li key={r.id} className="playbook-item">{r.title}</li>
+                ))}
+              </ul>
+              <div className="playbook-score-row">
+                <span>Recall <span className="playbook-score-val">{playbookScore.costlyRecallN}</span></span>
+                <span>·</span>
+                <span>Silence <span className="playbook-score-val">{playbookScore.silenceN}</span></span>
+                <span>·</span>
+                <a href="/?view=playbook" onClick={(e) => go("/?view=playbook", e)}>
+                  Full evaluation →
+                </a>
+              </div>
+            </div>
+
           </div>
-        </section>
-      </div>
-    </div>
+        </div>
+      </main>
+    </>
   );
 }
