@@ -55,6 +55,7 @@ export function lookupPlaybook(): {
     audience: "First-apartment renter in California (sample packet: Maya Chen).",
     loud: PLAYBOOK_RULES.map((r) => r.title),
     silent: [
+      "Security deposit (one month with Civil Code itemization) — out of the loud set",
       "Quiet enjoyment",
       "Habitability",
       "Keys and access",

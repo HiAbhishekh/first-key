@@ -3,6 +3,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { WITHHELD_TOOLS } from "./catalog";
 import { runChecks } from "./checks";
+import { runEvalGates } from "./eval/gates";
+import { formatPlaybookReport } from "./eval/report";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const siteTools = readFileSync(join(root, "SiteTools.tsx"), "utf8");
@@ -33,7 +35,10 @@ if (siteTools.includes("mailto:")) {
   failures.push("SiteTools has mailto:");
 }
 
-const results = runChecks();
+console.log(formatPlaybookReport());
+console.log("");
+
+const results = [...runEvalGates(), ...runChecks()];
 for (const r of results) {
   const mark = r.pass ? "PASS" : "FAIL";
   console.log(`${mark}  ${r.name}`);

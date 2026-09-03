@@ -10,6 +10,7 @@ import {
 } from "./toolSchemas";
 import { LEASE_TEXT, TENANT } from "./gold";
 import { lookupPlaybook } from "./playbook";
+import { canonicalSummary } from "./eval/score";
 import { toolIsOn, toolsOnStage, WITHHELD_TOOLS } from "./catalog";
 import type { Action } from "./store";
 import type { Application, Packet } from "./types";
@@ -65,7 +66,10 @@ export function PacketTools({ packet, dispatch, onJump }: Props) {
     inputSchema: emptyObject,
     annotations: { readOnlyHint: true },
     enabled: toolIsOn(packet, "lookup_playbook"),
-    execute: () => lookupPlaybook(),
+    execute: () => ({
+      ...lookupPlaybook(),
+      score: canonicalSummary(),
+    }),
   });
 
   useSiteTool({

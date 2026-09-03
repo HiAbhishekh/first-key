@@ -1,9 +1,12 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { bothAgreed, toolsOnStage, WITHHELD_TOOLS } from "./catalog";
 import { PacketTools } from "./SiteTools";
 import { LISTING, LEASE_TEXT, PARENT, TENANT } from "./gold";
 import { downloadText } from "./letter";
 import { PLAYBOOK_RULES } from "./playbook";
+import { PlaybookCheck } from "./PlaybookCheck";
+import { canonicalSummary } from "./eval/score";
+import { go } from "./nav";
 import { usePacket } from "./store";
 import type { Application, Stage } from "./types";
 
@@ -29,6 +32,14 @@ const APP_FIELDS: {
 ];
 
 export default function App() {
+  const [search, setSearch] = useState(() => window.location.search);
+  useEffect(() => {
+    const sync = () => setSearch(window.location.search);
+    window.addEventListener("popstate", sync);
+    return () => window.removeEventListener("popstate", sync);
+  }, []);
+  const view = new URLSearchParams(search).get("view");
+  if (view === "playbook") return <PlaybookCheck />;
   return <Desk />;
 }
 
@@ -71,6 +82,7 @@ function Desk() {
   const canCountersign = Boolean(packet.outbound) && bothAgreed(packet);
   const openN = packet.findings.filter((f) => f.status === "open").length;
   const dismissedN = packet.findings.filter((f) => f.status === "dismissed").length;
+  const playbookScore = canonicalSummary();
 
   return (
     <div className="desk">
@@ -341,8 +353,16 @@ function Desk() {
           <div className="card">
             <h2>Playbook</h2>
             <p className="muted">
-              {PLAYBOOK_RULES.length} costly clauses. Ordinary terms stay off
-              this list.
+              {playbookScore.costlyRecallN} costly clauses pinned ·{" "}
+              {playbookScore.silenceN} ordinary clauses quiet. Deposit is out
+              of the loud set.
+              {" · "}
+              <a
+                href="/?view=playbook"
+                onClick={(e) => go("/?view=playbook", e)}
+              >
+                Full check
+              </a>
             </p>
             <ul className="loud">
               {PLAYBOOK_RULES.map((r) => (

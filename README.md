@@ -58,6 +58,31 @@ npm test
 npm run build
 ```
 
+## Playbook check
+
+The clerk pins four costly clauses and stays quiet on the rest. The security deposit is out of the loud set (one month, itemized under the Civil Code).
+
+Gold is labeled per clause, then scored against `scanLease`. `npm test` prints the table and fails if recall, precision, or silence move off 1.00 on the extractive set. Paraphrases of the same costs are expected misses — this playbook is extractive, not a model.
+
+On the Maya Chen sample lease:
+
+| | |
+| --- | --- |
+| Costly-clause recall | 4/4 (1.00) |
+| Precision | 4/4 (1.00) |
+| Silence on ordinary clauses | 18/18 (1.00) |
+
+On the labeled corpus (27 leases: exact subsets, decoys, injection, two-month deposit, paraphrases):
+
+| | |
+| --- | --- |
+| Extractive recall | 54/54 (1.00) |
+| Extractive precision | 54/54 (1.00) |
+| Silence | 417/417 (1.00) |
+| Paraphrase-all semantic recall | 0/4 (0.00) |
+
+Deposit is ordinary by design, including a two-month variant. Open `/?view=playbook` for the clause table.
+
 ## Stack
 
 Vite, React, TypeScript. The playbook is deterministic. MIT license.
